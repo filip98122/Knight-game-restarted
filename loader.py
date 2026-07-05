@@ -13,8 +13,8 @@ clock = pygame.time.Clock()
 events=pygame.event.get()
 WIDTH,HEIGHT = 1707,1067
 window = pygame.display.set_mode((WIDTH,HEIGHT))
-namesofsprites=[["attack",5,60],["rest",2,120],["run",7,60],["runattack",6,45],["walk",8,120],["powerattack",4,["chargeup",20,20,20]],["challenge",5,180]]
-scale=1.1
+namesofsprites=[["attack",5,50],["rest",2,120],["run",7,60],["runattack",6,45],["walk",8,120],["powerattack",4,["chargeup",20,20,20]],["challenge",5,180]]
+scale=HEIGHT/900
 def load():
     textures={}
     for i in range(len(namesofsprites)):
