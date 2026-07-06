@@ -17,7 +17,7 @@ class Knight:
         
         if keys[pygame.K_LSHIFT]  and s.lockin==None:
             speedboost*=2
-            s.stamina-=0.5
+            #s.stamina-=0.5
             if not s.shift:
                 s.shift=True
                 s.time=0
@@ -44,6 +44,8 @@ class Knight:
                         amount=namesofsprites[i][1]
                         timeamount=namesofsprites[i][2]
                         break
+                if spritename!=s.previousanimation:
+                    s.time=0
                 img=textures[f"{dire}{spritename}{int(s.time//(timeamount/amount))}"]
                 s.x-=img.get_width()
                 
@@ -67,6 +69,8 @@ class Knight:
                         amount=namesofsprites[i][1]
                         timeamount=namesofsprites[i][2]
                         break
+                if spritename!=s.previousanimation:
+                    s.time=0
                 img=textures[f"{dire}{spritename}{int(s.time//(timeamount/amount))}"]
                 s.x+=img.get_width()
                 
@@ -83,6 +87,16 @@ class Knight:
                     s.x+=s.speed
                 else:
                     s.x-=s.speed
+        if s.lockin=="jump":
+            speedboost=1
+            if keys[pygame.K_LSHIFT]  and s.lockin==None:
+                speedboost*=2
+                #s.stamina-=0.5
+                if s.directionr:
+                    s.x+=s.speed*speedboost
+                    
+                else:
+                    s.x-=s.speed*speedboost
     def get_animation(s,keys,mouse):
         spritename="rest"
         if s.lockin!=None:
@@ -100,6 +114,10 @@ class Knight:
                 s.time=0
                 spritename="runattack"
                 s.lockin="runattack"
+            if keys[pygame.K_SPACE]:
+                s.time=0
+                spritename="jump"
+                s.lockin="jump"
         return spritename
     def draw(s,keys,mouse):
         
@@ -163,6 +181,7 @@ class Knight:
         s.previousanimation=copy.deepcopy(spritename)
         #pygame.draw.circle(window,(0,0,0),)
 player=Knight(300,HEIGHT-100,10,360,360,0,True)
+lastframekeys=[]
 while True:
     window.fill("Blue")
     keys = pygame.key.get_pressed()
@@ -178,4 +197,5 @@ while True:
     player.move(keys,mouseclicked)
     player.draw(keys,mouseclicked)
     pygame.display.update()
+    lastframekeys=keys
     clock.tick(60)
