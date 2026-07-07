@@ -1,20 +1,63 @@
 from loader import *
+ltexturesoffset={"attack":[[0,0],[42,0],[54,0],[0,0],[0,82]],"jump":[[0,0],[0,18],[0,0],[20,49],[0,46],[0,44]],"powerattack":[[14,0],[24,0],[14,55],[13,45]]}
+def get_knight_rect(spritename:str,xleft:int,time:int):
+    if spritename in ltexturesoffset:
+        newleft=xleft+ltexturesoffset[spritename][time][0]*scale
+        newwidth=textures[f"r{spritename}{time}"].get_width()-ltexturesoffset[spritename][time][1]*scale
+    else:
+        newleft=xleft
+        newwidth=textures[f"r{spritename}{time}"].get_width()
+    return newleft,newwidth
+
+
+
+ddyforplayerchange=HEIGHT/53350
+ddycapforplayer=HEIGHT/5335
+class Platforms:
+    def __init__(s,pic:int,x,y,width,height):
+        s.x=x
+        s.y=y
+        s.width=width
+        s.height=height
+        textures[f"scaled{pic}"]=pygame.transform.scale(textures[pic],(s.width,s.height))
+        s.pic=pic
+        
+    def draw(s,window):
+        window.blit(textures[f"scaled{s.pic}"],(s.x,s.y))
+        
+    def ifplayerontop(s,px,py,pwidth,dirr):
+        if dirr:
+            if not (px>s.x+s.width):
+                if not (px+pwidth<s.x):
+                    return [True,s.y]
+            return [False]
+        else:
+            if not (px-pwidth>s.x+s.width):
+                if not (px<s.x):
+                    return [True,s.y]
+            return [False]
+        
+lplatforms=[Platforms(1,0,HEIGHT-99,WIDTH,99)]
 class Knight:
     def __init__(s,x,y,health,stamina,maxstamina,time,dirr,atributes=None):
         s.x=x
         s.y=y
         s.health=health
         s.stamina=stamina
-        s.maxstamina=maxstamina        
+        s.maxstamina=maxstamina
         s.time=time
         s.directionr=dirr
         s.speed=3
         s.shift=False
         s.previousanimation=None
         s.lockin=None
-    def move(s,keys,mouse):
+        s.dy=0
+        s.ddy=0
+        s.lasttimefell=True
+    def move(s,keys,mouse,platy):
         speedboost=1
-        
+        if s.lockin==None:
+            s.jumpspeedboost=1
         if keys[pygame.K_LSHIFT]  and s.lockin==None:
             speedboost*=2
             #s.stamina-=0.5
@@ -31,51 +74,33 @@ class Knight:
             if not s.directionr:
                 s.directionr=not s.directionr
 
-
-
-
-                spritename=s.get_animation(keys,mouse)
-                if s.directionr:
-                    dire="r"
-                else:
-                    dire="l"
-                for i in range(len(namesofsprites)):
-                    if namesofsprites[i][0]==spritename:
-                        amount=namesofsprites[i][1]
-                        timeamount=namesofsprites[i][2]
-                        break
-                if spritename!=s.previousanimation:
-                    s.time=0
-                img=textures[f"{dire}{spritename}{int(s.time//(timeamount/amount))}"]
+                #SIDE CHANGE
+                #SIDE CHANGE
+                #SIDE CHANGE
+                #SIDE CHANGE
+                g=s.get_img(keys,mouse)
+                img=g[1]
                 s.x-=img.get_width()
-                
-                
-                
-                #s.time=0
+            
         if keys[pygame.K_a] and s.lockin==None:
             s.x-=s.speed*speedboost
             if s.directionr:
                 s.directionr=not s.directionr
                 
-                
-                
-                spritename=s.get_animation(keys,mouse)
-                if s.directionr:
-                    dire="r"
-                else:
-                    dire="l"
-                for i in range(len(namesofsprites)):
-                    if namesofsprites[i][0]==spritename:
-                        amount=namesofsprites[i][1]
-                        timeamount=namesofsprites[i][2]
-                        break
-                if spritename!=s.previousanimation:
-                    s.time=0
-                img=textures[f"{dire}{spritename}{int(s.time//(timeamount/amount))}"]
+                #SIDE CHANGE
+                #SIDE CHANGE
+                #SIDE CHANGE
+                #SIDE CHANGE
+                g=s.get_img(keys,mouse)
+                img=g[1]
                 s.x+=img.get_width()
                 
                 
-                #s.time=0
+        #LOCKINS
+        #LOCKINS
+        #LOCKINS
+        #LOCKINS
+        #LOCKINS
         if s.lockin=="runattack":
             if s.directionr:
                 s.x+=s.speed*2
@@ -87,16 +112,42 @@ class Knight:
                     s.x+=s.speed
                 else:
                     s.x-=s.speed
+        
         if s.lockin=="jump":
-            speedboost=1
-            if keys[pygame.K_LSHIFT]  and s.lockin==None:
-                speedboost*=2
                 #s.stamina-=0.5
-                if s.directionr:
-                    s.x+=s.speed*speedboost
-                    
-                else:
-                    s.x-=s.speed*speedboost
+            if s.directionr:
+                s.x+=s.speed*s.jumpspeedboost                
+            else:
+                s.x-=s.speed*s.jumpspeedboost
+                
+                #ANIMATION
+                #ANIMATION
+                #ANIMATION
+                #ANIMATION
+                #ANIMATION
+                #ANIMATION
+                #ANIMATION
+                #ANIMATION
+                
+                
+                
+                
+                
+        #Y
+        #Y
+        #Y
+        if platy>s.y and platy>s.y+s.dy and s.y-platy!=-1:
+            s.ddy+=ddyforplayerchange
+            s.ddy=min(ddycapforplayer,s.ddy)
+            s.dy+=s.ddy
+            s.lasttimefell=True
+        elif platy>s.y and not platy>s.y+s.dy:
+            if s.lasttimefell:
+                s.lasttimefell=False
+                s.ddy=0
+                s.dy=0
+            s.y=platy-1
+        s.y+=s.dy
     def get_animation(s,keys,mouse):
         spritename="rest"
         if s.lockin!=None:
@@ -106,6 +157,8 @@ class Knight:
                 spritename="walk"
             if keys[pygame.K_LSHIFT] and (keys[pygame.K_d] or keys[pygame.K_a]):
                 spritename="run"
+            if (keys[pygame.K_d] and keys[pygame.K_a]):
+                spritename="rest"
             if mouse[0]==True:
                 s.time=0
                 spritename="attack"
@@ -115,12 +168,16 @@ class Knight:
                 spritename="runattack"
                 s.lockin="runattack"
             if keys[pygame.K_SPACE]:
+                s.dy=-2
+                s.ddy=0
                 s.time=0
+                if keys[pygame.K_LSHIFT]:
+                    s.jumpspeedboost=2
                 spritename="jump"
                 s.lockin="jump"
         return spritename
-    def draw(s,keys,mouse):
-        
+    
+    def get_img(s,keys,mouse):
         #Animation
         #Animation
         #Animation
@@ -154,12 +211,22 @@ class Knight:
             s.time=0
 
         s.time%=timeamount
-        img=textures[f"{dire}{spritename}{int(s.time//(timeamount/amount))}"]
+        frame=int(s.time//(timeamount/amount))
+        img=textures[f"{dire}{spritename}{frame}"]
+        return [spritename,img,timeamount,amount,frame]
+    def draw(s,keys,mouse):
+        notordered=s.get_img(keys,mouse)
+        frame=notordered[4]
+        amount=notordered[3]
+        timeamount=notordered[2]
+        img=notordered[1]
+        spritename=notordered[0]
+        
         textureoffset=0
         if spritename=="attack":
-            if int(s.time//(timeamount/amount))==1:
+            if frame==1:
                 textureoffset=26*scale
-            elif int(s.time//(timeamount/amount))==2:
+            elif frame==2:
                 textureoffset=50*scale
         textureoffset=int(textureoffset)
         if s.directionr:
@@ -194,8 +261,21 @@ while True:
     
     if keys[pygame.K_ESCAPE]:
         break
-    player.move(keys,mouseclicked)
+    playerstandingonplatform=False
+    things=player.get_img(keys,mouseclicked)
+    img=things[1]
+    pwidth=img.get_width()
+    pheight=img.get_height()
+    platformy=None
+    for i in range(len(lplatforms)):
+        lplatforms[i].draw(window)
+        verdict=lplatforms[i].ifplayerontop(player.x,player.y,pwidth,player.directionr)
+        if verdict[0]:
+            playerstandingonplatform=True
+            platformy=verdict[1]
+    
+    player.move(keys,mouseclicked,platformy)
     player.draw(keys,mouseclicked)
     pygame.display.update()
     lastframekeys=keys
-    clock.tick(60)
+    clock.tick(45)
