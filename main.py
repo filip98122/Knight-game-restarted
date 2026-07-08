@@ -28,28 +28,26 @@ class Platforms:
     def ifplayerontop(s,px,py,pwidth,dirr):
         if dirr:
             if not (px>s.x+s.width):
-                if not (px+pwidth<s.x):
+                if not (px+pwidth<s.x) and py<s.y:
                     zadniji=False
-                    if not (s.x<px<s.x+s.width and s.x<px+pwidth<s.x+s.width):
-                        if abs(px-s.x)<abs(px-s.x-s.width):
-                            zadniji="l"
-                        else:
-                            zadniji="r"
-                    return [True,s.y,zadniji]
-            return [False,-1,None]
+                    if s.x>centerofmass:
+                        zadniji="l"
+                    if centerofmass>s.x+s.width:
+                        zadniji="r"
+                    return [True,s.y,s.x,s.width,zadniji]
+            return [False,-1,-1,-1,None]
         else:
             if not (px-pwidth>s.x+s.width):
-                if not (px<s.x):
+                if not (px<s.x) and py<s.y:
                     zadniji=False
-                    if not (s.x<px<s.x+s.width and s.x<px-pwidth<s.x+s.width):
-                        if abs(s.x-s.y)<abs(s.x-s.y-s.width):
-                            zadniji="l"
-                        else:
-                            zadniji="r"
-                    return [True,s.y,zadniji]
-            return [False,-1,None]
+                    if s.x>centerofmass:
+                        zadniji="l"
+                    if centerofmass>s.x+s.width:
+                        zadniji="r"
+                    return [True,s.y,s.x,s.width ,zadniji]
+            return [False,-1,-1,-1,None]
         
-lplatforms=[Platforms(1,0,HEIGHT-99,WIDTH//2-100,99),Platforms(1,WIDTH//2+100,HEIGHT-199,WIDTH//2-100,99)]
+lplatforms=[Platforms(1,0,HEIGHT-99,WIDTH//2-100,99),Platforms(1,WIDTH//2+100,HEIGHT-199,WIDTH//2-100,99),Platforms(1,0,HEIGHT-379,WIDTH//2-100,99),Platforms(1,WIDTH//2+100,HEIGHT-479,WIDTH//2-100,99)]
 class Knight:
     def __init__(s,x,y,health,stamina,maxstamina,time,dirr,atributes=None):
         s.x=x
@@ -65,7 +63,9 @@ class Knight:
         s.lockin=None
         s.dy=0
         s.ddy=0
+        s.slidof=300
         s.lasttimefell=False
+        s.slided=False
     def move(s,keys,mouse,platy,sliding):
         if s.lockin==None:
             if not s.lasttimefell:
@@ -147,11 +147,18 @@ class Knight:
                 #ANIMATION
                 #ANIMATION
                 #ANIMATION
-        #if klizanje!=False:
-        #    if klizanje=="r":
-        #        s.x+=0.1
-        #    if klizanje=="l":
-        #        s.x-=0.1
+        if sliding[-1]!=False:
+            s.slidof-=1
+            if s.slidof==0:
+                s.slided=True
+                s.slidof=300
+                if sliding[-1]=="r":
+                    s.x=sliding[0]+sliding[1]+1
+                if sliding[-1]=="l":
+                    s.x=sliding[0]-1
+        else:
+            s.slidof=300
+        
                 
                 
                 
@@ -210,6 +217,10 @@ class Knight:
             if s.lockin==None and s.lasttimefell:
                 spritename="jump"
                 s.time=88
+            if s.slided:
+                s.lockin==None
+                s.time=0
+                spritename="falling"
         return spritename
     
     def get_img(s,keys,mouse):
@@ -300,27 +311,35 @@ while True:
     things=player.get_img(keys,mouseclicked)
     platformy=None
     verdict=[False,None]
-    klizanje=None
+    klizanje=[None]
     #OF FRAME
     #OF FRAME
     #OF FRAME
+    difference=None
     plx,plwidth=get_knight_rect(things[0],player.x,things[-1])
     centerofmass=plx+plwidth//2
     for i in range(len(lplatforms)):
         lplatforms[i].draw(window)
         verdict=lplatforms[i].ifplayerontop(plx,player.y,plwidth,player.directionr)
         if verdict[0]:
-            playerstandingonplatform=True
-            platformy=verdict[1]
-        if verdict[2]==False:
-            klizanje=False
-        elif klizanje!=False:
-            if klizanje==None:
-                klizanje=verdict[2]
-            if klizanje=="r" and verdict[2]=="l":
-                klizanje=False
-            if klizanje=="l" and verdict[2]=="r":
-                klizanje==False
+            if difference==None:
+                playerstandingonplatform=True
+                platformy=verdict[1]
+                difference=platformy-player.y
+            else:
+                if verdict[1]-player.y<=difference:
+                    playerstandingonplatform=True
+                    platformy=verdict[1]
+                    difference=platformy-player.y
+        if verdict[-1]==False:
+            klizanje=[False]
+        elif klizanje[-1]!=False:
+            if klizanje[-1]==None:
+                klizanje=verdict[2:5]
+            if klizanje[-1]=="r" and verdict[-1]=="l":
+                klizanje=[False]
+            if klizanje[-1]=="l" and verdict[-1]=="r":
+                klizanje==[False]
             
     
     player.move(keys,mouseclicked,platformy,klizanje)
