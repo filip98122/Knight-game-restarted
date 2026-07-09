@@ -1,13 +1,22 @@
 from loader import *
 ltexturesoffset={"attack":[[0,0],[42,0],[54,0],[0,0],[0,82]],"jump":[[0,0],[0,18],[0,0],[20,49],[0,46],[0,44]],"powerattack":[[14,0],[24,0],[14,55],[13,45]]}
 
-def get_knight_rect(spritename:str,xleft:int,time:int):
+def get_knight_rect(spritename:str,xleft:int,time:int,dirrectionr):
     if spritename in ltexturesoffset:
-        newleft=xleft+ltexturesoffset[spritename][time][0]*scale
-        newwidth=textures[f"r{spritename}{time}"].get_width()-ltexturesoffset[spritename][time][1]*scale
+        if dirrectionr:
+            newleft=xleft+ltexturesoffset[spritename][time][0]*scale
+            newwidth=textures[f"r{spritename}{time}"].get_width()-ltexturesoffset[spritename][time][1]*scale-ltexturesoffset[spritename][time][0]*scale
+        else:
+            newleft=xleft-ltexturesoffset[spritename][time][0]*scale
+            newwidth=textures[f"r{spritename}{time}"].get_width()-ltexturesoffset[spritename][time][1]*scale-ltexturesoffset[spritename][time][0]*scale
     else:
-        newleft=xleft
-        newwidth=textures[f"r{spritename}{time}"].get_width()
+        if dirrectionr:
+            newleft=xleft
+            newwidth=textures[f"r{spritename}{time}"].get_width()
+        else:
+            newwidth=textures[f"r{spritename}{time}"].get_width()
+            newleft=xleft
+            
     return newleft,newwidth
 
 
@@ -70,7 +79,6 @@ class Knight:
         if s.lockin==None:
             if not s.lasttimefell:
                 speedboost=1
-                s.jumpspeedboost=1
                 if keys[pygame.K_LSHIFT]:
                     speedboost*=2
                     #s.stamina-=0.5
@@ -110,10 +118,11 @@ class Knight:
                         s.x+=img.get_width()
                         s.time-=1
             else:
-                if s.directionr:
-                    s.x+=s.speed*s.jumpspeedboost                
-                else:
-                    s.x-=s.speed*s.jumpspeedboost
+                if s.slided==False:
+                    if s.directionr:
+                        s.x+=s.speed*s.jumpspeedboost                
+                    else:
+                        s.x-=s.speed*s.jumpspeedboost
 
         #LOCKINS
         #LOCKINS
@@ -147,17 +156,25 @@ class Knight:
                 #ANIMATION
                 #ANIMATION
                 #ANIMATION
-        if sliding[-1]!=False:
+        if sliding[-1]!=False and s.slided==False and s.lockin==None:
             s.slidof-=1
             if s.slidof==0:
                 s.slided=True
-                s.slidof=300
+                s.slidof=150
+                notordered=s.get_img(keys,mouse)
+                widthframe=notordered[1].get_width()
                 if sliding[-1]=="r":
-                    s.x=sliding[0]+sliding[1]+1
+                    if s.directionr:
+                        s.x=sliding[0]+sliding[1]+1
+                    else:
+                        s.x=sliding[0]+sliding[1]+1+widthframe
                 if sliding[-1]=="l":
-                    s.x=sliding[0]-1
+                    if s.directionr:
+                        s.x=sliding[0]-1-widthframe
+                    else:
+                        s.x=sliding[0]-1
         else:
-            s.slidof=300
+            s.slidof=150
         
                 
                 
@@ -167,6 +184,10 @@ class Knight:
         #Y
         #Y
         if platy==None:
+            if s.jumped==False:
+                s.jumpspeedboost=1
+                if keys[pygame.K_LSHIFT]:
+                    s.jumpspeedboost=2
             s.ddy+=ddyforplayerchange
             s.ddy=min(ddycapforplayer,s.ddy)
             s.dy+=s.ddy
@@ -180,9 +201,11 @@ class Knight:
                 s.lasttimefell=True
             elif (platy>s.y and not platy>s.y+s.dy) or (platy>s.y and platy<s.y+s.dy):
                 if s.lasttimefell:
+                    s.jumped=False
                     s.lasttimefell=False
                     s.ddy=0
                     s.dy=0
+                s.jumpspeedboost=1
             
                 s.y=platy-1
         s.y+=s.dy
@@ -214,11 +237,12 @@ class Knight:
                         s.jumpspeedboost=2
                     spritename="jump"
                     s.lockin="jump"
+                    s.jumped=True
             if s.lockin==None and s.lasttimefell:
                 spritename="jump"
                 s.time=88
             if s.slided:
-                s.lockin==None
+                s.lockin=None
                 s.time=0
                 spritename="falling"
         return spritename
@@ -292,6 +316,7 @@ class Knight:
                      img.get_height()
                      ))
         s.previousanimation=copy.deepcopy(spritename)
+        return img
         #pygame.draw.circle(window,(0,0,0),)
 player=Knight(300,HEIGHT-100,10,360,360,0,True)
 lastframekeys=[]
@@ -316,8 +341,11 @@ while True:
     #OF FRAME
     #OF FRAME
     difference=None
-    plx,plwidth=get_knight_rect(things[0],player.x,things[-1])
-    centerofmass=plx+plwidth//2
+    plx,plwidth=get_knight_rect(things[0],player.x,things[-1],player.directionr)
+    if player.directionr:
+        centerofmass=plx+plwidth//2
+    else:
+        centerofmass=plx-plwidth//2
     for i in range(len(lplatforms)):
         lplatforms[i].draw(window)
         verdict=lplatforms[i].ifplayerontop(plx,player.y,plwidth,player.directionr)
@@ -340,10 +368,11 @@ while True:
                 klizanje=[False]
             if klizanje[-1]=="l" and verdict[-1]=="r":
                 klizanje==[False]
-            
     
     player.move(keys,mouseclicked,platformy,klizanje)
-    player.draw(keys,mouseclicked)
+    drawn_img=player.draw(keys,mouseclicked)
+    if player.y-50>HEIGHT+drawn_img.get_height():
+        break
     pygame.display.update()
     lastframekeys=keys
     clock.tick(45)
