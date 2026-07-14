@@ -21,8 +21,8 @@ def load():
     for i in range(len(namesofsprites)):
         for j in range(namesofsprites[i][1]):
             a=pygame.image.load(f"textures/Knight/{namesofsprites[i][0]}{j}.png")
-            textures[f"r{namesofsprites[i][0]}{j}"]=pygame.transform.scale(a,(a.get_width()*scale,a.get_height()*scale))
-            textures[f"l{namesofsprites[i][0]}{j}"]=pygame.transform.flip(textures[f"r{namesofsprites[i][0]}{j}"],True,False)
+            textures[f"Knightr{namesofsprites[i][0]}{j}"]=pygame.transform.scale(a,(a.get_width()*scale,a.get_height()*scale))
+            textures[f"Knightl{namesofsprites[i][0]}{j}"]=pygame.transform.flip(textures[f"Knightr{namesofsprites[i][0]}{j}"],True,False)
     for i in range(platformamount):
         textures[i+1]=pygame.image.load(f"textures/Platforms/{i+1}.png")
     return textures

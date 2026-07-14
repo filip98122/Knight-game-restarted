@@ -5,16 +5,16 @@ def get_knight_rect(spritename:str,xleft:int,time:int,dirrectionr):
     if spritename in ltexturesoffset:
         if dirrectionr:
             newleft=xleft+ltexturesoffset[spritename][time][0]*scale
-            newwidth=textures[f"r{spritename}{time}"].get_width()-ltexturesoffset[spritename][time][1]*scale-ltexturesoffset[spritename][time][0]*scale
+            newwidth=textures[f"Knightr{spritename}{time}"].get_width()-ltexturesoffset[spritename][time][1]*scale-ltexturesoffset[spritename][time][0]*scale
         else:
             newleft=xleft-ltexturesoffset[spritename][time][0]*scale
-            newwidth=textures[f"r{spritename}{time}"].get_width()-ltexturesoffset[spritename][time][1]*scale-ltexturesoffset[spritename][time][0]*scale
+            newwidth=textures[f"Knightr{spritename}{time}"].get_width()-ltexturesoffset[spritename][time][1]*scale-ltexturesoffset[spritename][time][0]*scale
     else:
         if dirrectionr:
             newleft=xleft
-            newwidth=textures[f"r{spritename}{time}"].get_width()
+            newwidth=textures[f"Knightr{spritename}{time}"].get_width()
         else:
-            newwidth=textures[f"r{spritename}{time}"].get_width()
+            newwidth=textures[f"Knightr{spritename}{time}"].get_width()
             newleft=xleft
             
     return newleft,newwidth
@@ -57,6 +57,30 @@ class Platforms:
             return [False,-1,-1,-1,None]
         
 lplatforms=[Platforms(1,0,HEIGHT-99,WIDTH//2-100,99),Platforms(1,WIDTH//2+100,HEIGHT-199,WIDTH//2-100,99),Platforms(1,0,HEIGHT-379,WIDTH//2-100,99),Platforms(1,WIDTH//2+100,HEIGHT-479,WIDTH//2-100,99)]
+
+
+
+
+
+class Skeleton_spearman:
+    def __init__(s,x,y,health,time,dirr,atributes=None):
+        s.x=x
+        s.y=y
+        s.health=health
+        s.time=time
+        s.dirr=dirr
+    def behaviour(s):
+        pass
+    def get_animation(s):
+        pass
+
+
+
+
+
+
+
+
 class Knight:
     def __init__(s,x,y,health,stamina,maxstamina,time,dirr,atributes=None):
         s.x=x
@@ -75,13 +99,15 @@ class Knight:
         s.slidof=300
         s.lasttimefell=False
         s.slided=False
+        s.since_shift=0
     def move(s,keys,mouse,platy,sliding):
         if s.lockin==None:
             if not s.lasttimefell:
                 speedboost=1
-                if keys[pygame.K_LSHIFT]:
+                if keys[pygame.K_LSHIFT] and s.stamina>0:
                     speedboost*=2
-                    #s.stamina-=0.5
+                    s.stamina-=1
+                    s.since_shift=200
                     if not s.shift:
                         s.shift=True
                         s.time=0
@@ -89,7 +115,8 @@ class Knight:
                     if s.shift:
                         s.shift=False
                         s.time=0
-                    s.stamina+=1
+                    if s.since_shift==0:
+                        s.stamina+=2
                 if keys[pygame.K_d]:
                     s.x+=s.speed*speedboost
                     if not s.directionr:
@@ -186,7 +213,7 @@ class Knight:
         if platy==None:
             if s.jumped==False:
                 s.jumpspeedboost=1
-                if keys[pygame.K_LSHIFT]:
+                if keys[pygame.K_LSHIFT] and s.stamina>0:
                     s.jumpspeedboost=2
             s.ddy+=ddyforplayerchange
             s.ddy=min(ddycapforplayer,s.ddy)
@@ -209,6 +236,8 @@ class Knight:
             
                 s.y=platy-1
         s.y+=s.dy
+        if not keys[pygame.K_LSHIFT]:
+            s.since_shift=max(s.since_shift-1,0)
     def get_animation(s,keys,mouse):
         spritename="rest"
         if s.lockin!=None:
@@ -216,15 +245,15 @@ class Knight:
         else:
             if (keys[pygame.K_d] or keys[pygame.K_a]) and not (keys[pygame.K_d] and keys[pygame.K_a]):
                 spritename="walk"
-            if keys[pygame.K_LSHIFT] and (keys[pygame.K_d] or keys[pygame.K_a]) and not (keys[pygame.K_d] and keys[pygame.K_a]):
+            if keys[pygame.K_LSHIFT] and s.stamina>0 and (keys[pygame.K_d] or keys[pygame.K_a]) and not (keys[pygame.K_d] and keys[pygame.K_a]):
                 spritename="run"
             if (keys[pygame.K_d] and keys[pygame.K_a]):
                 spritename="rest"
-            if mouse[0]==True:
+            if mouse[0]==True and s.lasttimefell==False:
                 s.time=0
                 spritename="attack"
                 s.lockin="attack"
-            if keys[pygame.K_LSHIFT] and mouse[0]:
+            if keys[pygame.K_LSHIFT] and s.stamina>0 and mouse[0] and s.lasttimefell==False:
                 s.time=0
                 spritename="runattack"
                 s.lockin="runattack"
@@ -233,7 +262,7 @@ class Knight:
                     s.dy=-8
                     s.ddy=0
                     s.time=0
-                    if keys[pygame.K_LSHIFT]:
+                    if keys[pygame.K_LSHIFT] and s.stamina>0:
                         s.jumpspeedboost=2
                     spritename="jump"
                     s.lockin="jump"
@@ -282,7 +311,7 @@ class Knight:
 
         s.time%=timeamount
         frame=int(s.time//(timeamount/amount))
-        img=textures[f"{dire}{spritename}{frame}"]
+        img=textures[f"Knight{dire}{spritename}{frame}"]
         return [spritename,img,timeamount,amount,frame]
     def draw(s,keys,mouse):
         notordered=s.get_img(keys,mouse)
@@ -316,10 +345,16 @@ class Knight:
                      img.get_height()
                      ))
         s.previousanimation=copy.deepcopy(spritename)
+        stamina_circlex=0
+        if s.directionr:
+            stamina_circlex
+        pygame.draw.circle(window,(0,0,0),)
         return img
-        #pygame.draw.circle(window,(0,0,0),)
+        
 player=Knight(300,HEIGHT-100,10,360,360,0,True)
 lastframekeys=[]
+
+
 while True:
     window.fill("Blue")
     keys = pygame.key.get_pressed()
