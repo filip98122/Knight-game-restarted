@@ -77,12 +77,25 @@ class Skeleton_spearman:
 
 
 
+class Portrait:
+    def __init__(s,x,y,portrait,offw,offh):
+        s.x,s.y=x,y
+        s.portrait=portrait
+        s.offw,s.offh=offw,offh
+    def draw(s):
+        
+        window.blit(textures[s.portrait],(s.x+s.offw,s.y+s.offh))
+        window.blit(textures["frame"],(s.x,s.y))
 
+
+offsetportraitplayerw=(WIDTH/knighheadscale[0]-WIDTH/knighheadscale[2])/2
+offsetportraitplayerh=(HEIGHT/knighheadscale[1]-HEIGHT/knighheadscale[3])/2
+playerportrait=Portrait(0,0,"Knighttopright",offsetportraitplayerw,offsetportraitplayerh)
 
 
 
 class Knight:
-    def __init__(s,x,y,health,stamina,maxstamina,time,dirr,atributes=None):
+    def __init__(s,x,y,health,maxhealth,stamina,maxstamina,time,dirr,atributes=None):
         s.x=x
         s.y=y
         s.health=health
@@ -100,6 +113,8 @@ class Knight:
         s.lasttimefell=False
         s.slided=False
         s.since_shift=0
+        s.jumpspeedboost=1
+        s.maxhealth=maxhealth
     def move(s,keys,mouse,platy,sliding):
         if s.lockin==None:
             if not s.lasttimefell:
@@ -345,13 +360,19 @@ class Knight:
                      img.get_height()
                      ))
         s.previousanimation=copy.deepcopy(spritename)
-        stamina_circlex=0
-        if s.directionr:
-            stamina_circlex
-        pygame.draw.circle(window,(0,0,0),)
+        #newx,neww=get_knight_rect(spritename,s.x,frame,s.directionr)
+        #if s.directionr:
+        #    centerofmassx=newx+neww//2
+        #else:
+        #    centerofmassx=newx-neww//2
+        
+        
+        
+        
+        #pygame.draw.circle(window,(46, 230, 137),(centerofmassx,s.y-int(HEIGHT//14.22666666666667)*2.5),int(WIDTH//68.28),int(WIDTH//(68.28*2)))
         return img
         
-player=Knight(300,HEIGHT-100,10,360,360,0,True)
+player=Knight(300,HEIGHT-100,10,10,360,360,0,True)
 lastframekeys=[]
 
 
@@ -408,6 +429,7 @@ while True:
     drawn_img=player.draw(keys,mouseclicked)
     if player.y-50>HEIGHT+drawn_img.get_height():
         break
+    playerportrait.draw()
     pygame.display.update()
     lastframekeys=keys
     clock.tick(45)
