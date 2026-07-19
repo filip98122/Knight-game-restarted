@@ -33,25 +33,25 @@ class Platforms:
         s.pic=pic
         
     def draw(s,window):
-        window.blit(s.scaled,(s.x,s.y))
+        window.blit(s.scaled,(s.x+camerax,s.y+cameray))
     def ifplayerontop(s,px,py,pwidth,dirr):
         if dirr:
-            if not (px>s.x+s.width):
-                if not (px+pwidth<s.x) and py<s.y:
+            if not (px>s.x+s.width+camerax):
+                if not (px+pwidth<s.x+camerax) and py<s.y+cameray:
                     zadniji=False
-                    if s.x>centerofmass:
+                    if s.x+camerax>centerofmass:
                         zadniji="l"
-                    if centerofmass>s.x+s.width:
+                    if centerofmass>s.x+s.width+camerax:
                         zadniji="r"
                     return [True,s.y,s.x,s.width,zadniji]
             return [False,-1,-1,-1,None]
         else:
-            if not (px-pwidth>s.x+s.width):
-                if not (px<s.x) and py<s.y:
+            if not (px-pwidth>s.x+camerax+s.width):
+                if not (px<s.x+camerax) and py<s.y+cameray:
                     zadniji=False
-                    if s.x>centerofmass:
+                    if s.x+camerax>centerofmass:
                         zadniji="l"
-                    if centerofmass>s.x+s.width:
+                    if centerofmass>s.x+s.width+camerax:
                         zadniji="r"
                     return [True,s.y,s.x,s.width ,zadniji]
             return [False,-1,-1,-1,None]
@@ -83,16 +83,20 @@ class Portrait:
         s.portrait=portrait
         s.offw,s.offh=offw,offh
     def draw(s):
-        
         window.blit(textures[s.portrait],(s.x+s.offw,s.y+s.offh))
         window.blit(textures["frame"],(s.x,s.y))
-
+    def draw_hearts(s,maxh,h):
+        if maxh>h:
+            xaddon=0
+            count=h
+            
+            #for i in range()
 
 offsetportraitplayerw=(WIDTH/knighheadscale[0]-WIDTH/knighheadscale[2])/2
 offsetportraitplayerh=(HEIGHT/knighheadscale[1]-HEIGHT/knighheadscale[3])/2
 playerportrait=Portrait(0,0,"Knighttopright",offsetportraitplayerw,offsetportraitplayerh)
 
-
+camerax,cameray=0,0
 
 class Knight:
     def __init__(s,x,y,health,maxhealth,stamina,maxstamina,time,dirr,atributes=None):
@@ -115,7 +119,8 @@ class Knight:
         s.since_shift=0
         s.jumpspeedboost=1
         s.maxhealth=maxhealth
-    def move(s,keys,mouse,platy,sliding):
+        s.jumped=False
+    def move(s,keys,mouse,platy,sliding,camerax,cameray):
         if s.lockin==None:
             if not s.lasttimefell:
                 speedboost=1
@@ -133,7 +138,7 @@ class Knight:
                     if s.since_shift==0:
                         s.stamina+=2
                 if keys[pygame.K_d]:
-                    s.x+=s.speed*speedboost
+                    camerax-=s.speed*speedboost
                     if not s.directionr:
                         s.directionr=not s.directionr
 
@@ -147,7 +152,7 @@ class Knight:
                         s.time-=1
                     
                 if keys[pygame.K_a]:
-                    s.x-=s.speed*speedboost
+                    camerax+=s.speed*speedboost
                     if s.directionr:
                         s.directionr=not s.directionr
                         
@@ -162,9 +167,9 @@ class Knight:
             else:
                 if s.slided==False:
                     if s.directionr:
-                        s.x+=s.speed*s.jumpspeedboost                
+                        camerax-=s.speed*s.jumpspeedboost                
                     else:
-                        s.x-=s.speed*s.jumpspeedboost
+                        camerax+=s.speed*s.jumpspeedboost
 
         #LOCKINS
         #LOCKINS
@@ -173,22 +178,22 @@ class Knight:
         #LOCKINS
         if s.lockin=="runattack":
             if s.directionr:
-                s.x+=s.speed*2
+                camerax-=s.speed*2
             else:
-                s.x-=s.speed*2
+                camerax+=s.speed*2
         if s.lockin=="attack":
             if s.time<21:
                 if s.directionr:
-                    s.x+=s.speed
+                    camerax-=s.speed
                 else:
-                    s.x-=s.speed
+                    camerax+=s.speed
         
         if s.lockin=="jump":
                 #s.stamina-=0.5
             if s.directionr:
-                s.x+=s.speed*s.jumpspeedboost                
+                camerax-=s.speed*s.jumpspeedboost                
             else:
-                s.x-=s.speed*s.jumpspeedboost
+                camerax+=s.speed*s.jumpspeedboost
                 
                 #ANIMATION
                 #ANIMATION
@@ -207,14 +212,18 @@ class Knight:
                 widthframe=notordered[1].get_width()
                 if sliding[-1]=="r":
                     if s.directionr:
-                        s.x=sliding[0]+sliding[1]+1
+                        #s.x=sliding[0]+sliding[1]+1
+                        camerax-=sliding[0]+sliding[1]+camerax+1-s.x
                     else:
-                        s.x=sliding[0]+sliding[1]+1+widthframe
+                        #s.x=sliding[0]+sliding[1]+1+widthframe
+                        camerax-=sliding[0]+sliding[1]+camerax+1+widthframe-s.x
                 if sliding[-1]=="l":
                     if s.directionr:
-                        s.x=sliding[0]-1-widthframe
+                        #s.x=sliding[0]-1-widthframe
+                        camerax+=s.x-(sliding[0]-1-widthframe)-camerax
                     else:
-                        s.x=sliding[0]-1
+                        #s.x=sliding[0]-1
+                        camerax+=s.x-(sliding[0]-1)-camerax
         else:
             s.slidof=150
         
@@ -230,18 +239,19 @@ class Knight:
                 s.jumpspeedboost=1
                 if keys[pygame.K_LSHIFT] and s.stamina>0:
                     s.jumpspeedboost=2
+                s.jumped=True 
             s.ddy+=ddyforplayerchange
             s.ddy=min(ddycapforplayer,s.ddy)
             s.dy+=s.ddy
             s.lasttimefell=True
             
         else:
-            if platy>s.y and platy>s.y+s.dy and s.y-platy!=-1 or platy<s.y and platy<s.y+s.dy:
+            if platy+cameray>s.y and platy+cameray>s.y+s.dy and platy+cameray-s.y>1 or platy+cameray<s.y and platy+cameray<s.y+s.dy:
                 s.ddy+=ddyforplayerchange
                 s.ddy=min(ddycapforplayer,s.ddy)
                 s.dy+=s.ddy
                 s.lasttimefell=True
-            elif (platy>s.y and not platy>s.y+s.dy) or (platy>s.y and platy<s.y+s.dy):
+            elif (platy+cameray>s.y and not platy+cameray>s.y+s.dy) or (platy+cameray>s.y and platy+cameray<s.y+s.dy):
                 if s.lasttimefell:
                     s.jumped=False
                     s.lasttimefell=False
@@ -249,10 +259,11 @@ class Knight:
                     s.dy=0
                 s.jumpspeedboost=1
             
-                s.y=platy-1
-        s.y+=s.dy
+                cameray-=(platy+cameray)-0.5-s.y
+        cameray-=s.dy
         if not keys[pygame.K_LSHIFT]:
             s.since_shift=max(s.since_shift-1,0)
+        return [camerax,cameray]
     def get_animation(s,keys,mouse):
         spritename="rest"
         if s.lockin!=None:
@@ -341,7 +352,7 @@ class Knight:
             if frame==1:
                 textureoffset=26*scale
             elif frame==2:
-                textureoffset=50*scale
+                textureoffset=50* scale
         textureoffset=int(textureoffset)
         if s.directionr:
             #26
@@ -372,7 +383,9 @@ class Knight:
         #pygame.draw.circle(window,(46, 230, 137),(centerofmassx,s.y-int(HEIGHT//14.22666666666667)*2.5),int(WIDTH//68.28),int(WIDTH//(68.28*2)))
         return img
         
-player=Knight(300,HEIGHT-100,10,10,360,360,0,True)
+player=Knight(WIDTH//2-50,HEIGHT//2+100,10,10,360,360,0,True)
+camerax=WIDTH//2-300
+cameray=(HEIGHT//2-HEIGHT)+200
 lastframekeys=[]
 
 
@@ -409,12 +422,12 @@ while True:
             if difference==None:
                 playerstandingonplatform=True
                 platformy=verdict[1]
-                difference=platformy-player.y
+                difference=platformy-player.y+cameray
             else:
-                if verdict[1]-player.y<=difference:
+                if verdict[1]+cameray-player.y<=difference:
                     playerstandingonplatform=True
                     platformy=verdict[1]
-                    difference=platformy-player.y
+                    difference=platformy-player.y+cameray
         if verdict[-1]==False:
             klizanje=[False]
         elif klizanje[-1]!=False:
@@ -423,12 +436,10 @@ while True:
             if klizanje[-1]=="r" and verdict[-1]=="l":
                 klizanje=[False]
             if klizanje[-1]=="l" and verdict[-1]=="r":
-                klizanje==[False]
-    
-    player.move(keys,mouseclicked,platformy,klizanje)
+                klizanje=[False]
+    camera=player.move(keys,mouseclicked,platformy,klizanje,camerax,cameray)
+    camerax,cameray=camera[0],camera[1]
     drawn_img=player.draw(keys,mouseclicked)
-    if player.y-50>HEIGHT+drawn_img.get_height():
-        break
     playerportrait.draw()
     pygame.display.update()
     lastframekeys=keys
