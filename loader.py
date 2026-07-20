@@ -17,12 +17,18 @@ namesofsprites=[["attack",5,50],["rest",2,150],["run",7,60],["runattack",6,45],[
 scale=HEIGHT/900
 platformamount=1
 knighheadscale=[4.962209302325581,3.066091954022989,6.654970760233918,4.1598440545808970]
+heartchange=WIDTH/(5257.56*2)
+staminacirclediameter=HEIGHT//21.34
+lhearts=["f","3","h"]
 for i in range(4):
     knighheadscale[i]*=2
 def load():
     textures={}
     for i in range(len(namesofsprites)):
         for j in range(namesofsprites[i][1]):
+            scale=HEIGHT/900
+            if namesofsprites[i][0]=="jump":
+                scale*=1.14
             a=pygame.image.load(f"textures/Knight/{namesofsprites[i][0]}{j}.png")
             textures[f"Knightr{namesofsprites[i][0]}{j}"]=pygame.transform.scale(a,(a.get_width()*scale,a.get_height()*scale))
             textures[f"Knightl{namesofsprites[i][0]}{j}"]=pygame.transform.flip(textures[f"Knightr{namesofsprites[i][0]}{j}"],True,False)
@@ -30,5 +36,10 @@ def load():
         textures[i+1]=pygame.image.load(f"textures/Platforms/{i+1}.png")
     textures["frame"]=pygame.transform.scale(pygame.image.load("textures/portraits/frame344348.png"),(WIDTH/knighheadscale[0],HEIGHT/knighheadscale[1]))
     textures["Knighttopright"]=pygame.transform.scale(pygame.image.load("textures/portraits/Knighttopright.png"),(WIDTH/knighheadscale[2],HEIGHT/knighheadscale[3]))
+    for i in range(len(lhearts)):
+        a=pygame.image.load(f"textures/icons/heart{lhearts[i]}.png")
+        textures[f"heart{lhearts[i]}"]=pygame.transform.scale(a,(a.get_width()*heartchange,a.get_height()*heartchange))
+    
+    
     return textures
 textures=load()

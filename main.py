@@ -82,15 +82,34 @@ class Portrait:
         s.x,s.y=x,y
         s.portrait=portrait
         s.offw,s.offh=offw,offh
+        s.framewidth=textures["frame"].get_width()
+        s.frameheight=textures["frame"].get_height()
+        s.n90degeres=math.radians(90)
     def draw(s):
         window.blit(textures[s.portrait],(s.x+s.offw,s.y+s.offh))
         window.blit(textures["frame"],(s.x,s.y))
     def draw_hearts(s,maxh,h):
-        if maxh>h:
-            xaddon=0
-            count=h
-            
-            #for i in range()
+        if maxh>=h:
+            xaddon=s.framewidth
+            count=h//1
+            for i in range(int(count)):
+                window.blit(textures["heartf"],(s.x+xaddon,s.y+s.frameheight//10))
+                xaddon+=textures["heartf"].get_width()+textures["heartf"].get_width()//7.5
+            if h%1!=0:
+                window.blit(textures["hearth"],(s.x+xaddon,s.y+s.frameheight//10))
+                xaddon+=textures["hearth"].get_width()+textures["hearth"].get_width()//7.5
+            for i in range(int(maxh-h)):
+                window.blit(textures["heart3"],(s.x+xaddon,s.y+s.frameheight//10))
+                xaddon+=textures["heart3"].get_width()+textures["heart3"].get_width()//7.5
+    def draw_stamina(s,maxstamina,stamina):
+        if maxstamina>=stamina:
+            xaddon=s.framewidth+staminacirclediameter
+            arcs=math.ceil(maxstamina/360)
+            for i in range(arcs):
+                pygame.draw.circle(window,(46, 230, 137), (s.x+xaddon,s.y+s.frameheight//2), int(staminacirclediameter//2.1),int(staminacirclediameter//3.5))
+                pygame.draw.arc(window,(0,0,0),pygame.Rect(s.x+xaddon-staminacirclediameter//2,s.y+s.frameheight//2-staminacirclediameter//2,staminacirclediameter,staminacirclediameter),
+                                s.n90degeres,math.radians(((stamina-90)%361)*-1+360),int(staminacirclediameter//2.9))
+        
 
 offsetportraitplayerw=(WIDTH/knighheadscale[0]-WIDTH/knighheadscale[2])/2
 offsetportraitplayerh=(HEIGHT/knighheadscale[1]-HEIGHT/knighheadscale[3])/2
@@ -137,6 +156,7 @@ class Knight:
                         s.time=0
                     if s.since_shift==0:
                         s.stamina+=2
+                        s.stamina=min(s.stamina,s.maxstamina)
                 if keys[pygame.K_d]:
                     camerax-=s.speed*speedboost
                     if not s.directionr:
@@ -203,7 +223,7 @@ class Knight:
                 #ANIMATION
                 #ANIMATION
                 #ANIMATION
-        if sliding[-1]!=False and s.slided==False and s.lockin==None:
+        if sliding[-1]!=False and s.slided==False and s.lockin==None and s.lasttimefell==False:
             s.slidof-=1
             if s.slidof==0:
                 s.slided=True
@@ -383,7 +403,7 @@ class Knight:
         #pygame.draw.circle(window,(46, 230, 137),(centerofmassx,s.y-int(HEIGHT//14.22666666666667)*2.5),int(WIDTH//68.28),int(WIDTH//(68.28*2)))
         return img
         
-player=Knight(WIDTH//2-50,HEIGHT//2+100,10,10,360,360,0,True)
+player=Knight(WIDTH//2-50,HEIGHT//2+100,7.5,10,360,360,0,True)
 camerax=WIDTH//2-300
 cameray=(HEIGHT//2-HEIGHT)+200
 lastframekeys=[]
@@ -441,6 +461,8 @@ while True:
     camerax,cameray=camera[0],camera[1]
     drawn_img=player.draw(keys,mouseclicked)
     playerportrait.draw()
+    playerportrait.draw_hearts(player.maxhealth,player.health)
+    playerportrait.draw_stamina(player.maxstamina,player.stamina)
     pygame.display.update()
     lastframekeys=keys
     clock.tick(45)
