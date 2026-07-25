@@ -19,8 +19,12 @@ def get_knight_rect(spritename:str,xleft:int,time:int,dirrectionr):
             
     return newleft,newwidth
 
-
-
+def rectlinecolison(linecords:list,rectlike:pygame.Rect):
+    if rectlike.clipline(linecords[0],linecords[1],linecords[2],linecords[3]):
+        return True
+    else:
+        return False
+    
 ddyforplayerchange=HEIGHT/53350
 ddycapforplayer=HEIGHT/5335
 class Platforms:
@@ -61,6 +65,27 @@ lplatforms=[Platforms(1,0,HEIGHT-99,WIDTH//2-100,99),Platforms(1,WIDTH//2+100,HE
 
 
 
+lskeletonspearmanlistofsprites={"attack":[(46, 0, 15, 17),(46, 0, 15, 17),(30, 0, 15, 17),(30, 0, 15, 17)],
+                                "defend":[(20, 10, 15, 17), (10, 12, 15, 17)],
+                                "defended":[(13, 0, 15, 17), (36, 0, 15, 17), (30, 0, 15, 17), (23, 0, 15, 17), (23, 0, 15, 17), (27, 28, 15, 17)],
+                                "hurt":[(22, 33, 15, 17), (20, 28, 15, 17), (12, 23, 15, 17)],
+                                "idle":[(15, 23, 15, 17), (15, 24, 15, 17), (15, 23, 15, 17), (15, 24, 15, 17), (15, 25, 15, 17), (15, 24, 15, 17), (15, 23, 15, 17)],
+                                "run":[(52, 0, 15, 17), (48, 2, 15, 17), (48, 2, 15, 17), (52, 2, 15, 17), (48, 2, 15, 17), (52, 0, 15, 17)],
+                                "runattack":[(46, 0, 15, 17), (46, 0, 15, 17), (30, 0, 15, 17), (30, 0, 15, 17), (30, 0, 15, 17)],
+                                "walk":[(20, 28, 15, 17), (17, 28, 15, 17), (15, 27, 15, 17), (20, 28, 15, 17), (15, 27, 15, 17), (32, 26, 15, 17), (28, 25, 15, 17)]}
+
+
+
+
+
+
+
+
+def angle_to_vector_unit_circle(angle):
+    rad=math.radians(angle)
+    dx=round(math.cos(rad),10)
+    dy=round(math.sin(rad),10)
+    return dx,dy
 
 class Skeleton_spearman:
     def __init__(s,x,y,health,time,dirr,atributes=None):
@@ -69,13 +94,64 @@ class Skeleton_spearman:
         s.health=health
         s.time=time
         s.dirr=dirr
+        s.state="stationary"
+    def getheadpos(s):
+        things=s.get_img()
+        if s.dirr:
+            dire="r"
+        else:
+            dire="l"
+            
+        cheight=textures[f"Skeletonspearman{dire}{things[0]}{things[-1]}"].get_height()
+        if s.dirr:
+            return s.x+lskeletonspearmanlistofsprites[things[0]][things[-1]][0],s.y+lskeletonspearmanlistofsprites[things[0]][things[-1]][1]-cheight,+lskeletonspearmanlistofsprites[things[0]][things[-1]][2],+lskeletonspearmanlistofsprites[things[0]][things[-1]][3]
+    def ray_cast_detetion(s):
+        if s.dirr:
+            linex=s.x
+        angle=150
+        endangle=215 #last angle is 210
+        while True:
+            
+            pygame.draw.line(window,(255,0,0),)
     def behaviour(s):
         pass
     def get_animation(s):
         pass
+    
+    
 
-
-
+        if s.state=="stationary":
+            spriitename="idle"
+        return spriitename
+    def get_img(s):   #Need to reset time after calling
+        #Animation
+        #Animation
+        #Animation
+        spritename=s.get_animation()
+        #Direction
+        #Direction
+        #Direction
+        #Direction
+        if s.dirr:
+            dire="r"
+        else:
+            dire="l"
+        #Index
+        #Index
+        #Index
+        amount=spritelistskeleton[0]
+        timeamount=spritelistskeleton[1]
+        #BLITING
+        #BLITING
+        #BLITING
+        #BLITING
+        s.time+=1
+        s.time%=timeamount
+        frame=int(s.time//(timeamount/amount))
+        img=textures[f"Skeleton{dire}{spritename}{frame}"]
+        return [spritename,img,timeamount,amount,frame]
+    def draw(s):
+        pass
 
 class Portrait:
     def __init__(s,x,y,portrait,offw,offh):
@@ -104,13 +180,13 @@ class Portrait:
     def draw_stamina(s,maxstamina,stamina):
         if maxstamina>=stamina:
             xaddon=s.framewidth+staminacirclediameter
-            arcs=math.ceil(maxstamina/360)
+            arcs=math.ceil(maxstamina//360)
             for i in range(arcs):
                 pygame.draw.circle(window,(46, 230, 137), (s.x+xaddon,s.y+s.frameheight//2), int(staminacirclediameter//2.1),int(staminacirclediameter//3.5))
                 pygame.draw.arc(window,(0,0,0),pygame.Rect(s.x+xaddon-staminacirclediameter//2,s.y+s.frameheight//2-staminacirclediameter//2,staminacirclediameter,staminacirclediameter),
                                 s.n90degeres,math.radians(((stamina-90)%361)*-1+360),int(staminacirclediameter//2.9))
-        
-
+                stamina-=360
+ 
 offsetportraitplayerw=(WIDTH/knighheadscale[0]-WIDTH/knighheadscale[2])/2
 offsetportraitplayerh=(HEIGHT/knighheadscale[1]-HEIGHT/knighheadscale[3])/2
 playerportrait=Portrait(0,0,"Knighttopright",offsetportraitplayerw,offsetportraitplayerh)
@@ -143,13 +219,14 @@ class Knight:
         if s.lockin==None:
             if not s.lasttimefell:
                 speedboost=1
-                if keys[pygame.K_LSHIFT] and s.stamina>0:
-                    speedboost*=2
-                    s.stamina-=1
-                    s.since_shift=200
-                    if not s.shift:
-                        s.shift=True
-                        s.time=0
+                sprite=s.get_animation(keys,mouse)
+                if keys[pygame.K_LSHIFT] and s.stamina>0 and sprite!="rest":
+                        speedboost*=2
+                        s.stamina-=1
+                        s.since_shift=200
+                        if not s.shift:
+                            s.shift=True
+                            s.time=0
                 else:
                     if s.shift:
                         s.shift=False
@@ -338,10 +415,10 @@ class Knight:
         #Index
         #Index
         #Index
-        for i in range(len(namesofsprites)):
-            if namesofsprites[i][0]==spritename:
-                amount=namesofsprites[i][1]
-                timeamount=namesofsprites[i][2]
+        for i in range(len(namesofspritesKnight)):
+            if namesofspritesKnight[i][0]==spritename:
+                amount=namesofspritesKnight[i][1]
+                timeamount=namesofspritesKnight[i][2]
                 break
         #BLITING
         #BLITING
@@ -403,7 +480,7 @@ class Knight:
         #pygame.draw.circle(window,(46, 230, 137),(centerofmassx,s.y-int(HEIGHT//14.22666666666667)*2.5),int(WIDTH//68.28),int(WIDTH//(68.28*2)))
         return img
         
-player=Knight(WIDTH//2-50,HEIGHT//2+100,7.5,10,360,360,0,True)
+player=Knight(WIDTH//2-50,HEIGHT//2+100,10,10,360,360,0,True)
 camerax=WIDTH//2-300
 cameray=(HEIGHT//2-HEIGHT)+200
 lastframekeys=[]
