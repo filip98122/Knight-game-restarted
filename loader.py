@@ -21,7 +21,7 @@ heartchange=WIDTH/(5257.56*2)
 staminacirclediameter=HEIGHT//21.34
 lhearts=["f","3","h"]
 spritelistskeleton={"idle":[7,250]}
-skeletonscale=HEIGHT/790.3703703703704
+skeletonscale=HEIGHT/(HEIGHT/2)
 for i in range(4):
     knighheadscale[i]*=2
 def load():
@@ -43,9 +43,9 @@ def load():
         textures[f"heart{lhearts[i]}"]=pygame.transform.scale(a,(a.get_width()*heartchange,a.get_height()*heartchange))
     for i in spritelistskeleton:
         for j in range(spritelistskeleton[i][0]):
-            a=pygame.image.load(f"textures/Skelton/{i}.png")
-            textures[f"Skeletonspearmanr{spritelistskeleton[i][0]}{j}"]=pygame.transform.scale(a,(a.get_width()*skeletonscale,a.get_height()*skeletonscale))
-            textures[f"Skeletonspearmanl{spritelistskeleton[i][0]}{j}"]=pygame.transform.flip(textures[f"Skeletonr{spritelistskeleton[i][0]}{j}"],True,False)
+            a=pygame.image.load(f"textures/Skeleton/{i}{j}.png")
+            textures[f"Skeletonspearmanr{i}{j}"]=pygame.transform.scale(a,(a.get_width()*skeletonscale,a.get_height()*skeletonscale))
+            textures[f"Skeletonspearmanl{i}{j}"]=pygame.transform.flip(textures[f"Skeletonspearmanr{i}{j}"],True,False)
     
     return textures
 textures=load()

@@ -78,7 +78,8 @@ lskeletonspearmanlistofsprites={"attack":[(46, 0, 15, 17),(46, 0, 15, 17),(30, 0
 
 
 
-
+debugmodeforvision=False
+holdingv=False
 
 
 def angle_to_vector_unit_circle(angle):
@@ -104,19 +105,42 @@ class Skeleton_spearman:
             
         cheight=textures[f"Skeletonspearman{dire}{things[0]}{things[-1]}"].get_height()
         if s.dirr:
-            return s.x+lskeletonspearmanlistofsprites[things[0]][things[-1]][0],s.y+lskeletonspearmanlistofsprites[things[0]][things[-1]][1]-cheight,+lskeletonspearmanlistofsprites[things[0]][things[-1]][2],+lskeletonspearmanlistofsprites[things[0]][things[-1]][3]
+            return s.x+skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][0]+camerax,s.y+skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][1]-cheight+cameray,skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][2],skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][3],things
+        else:
+            return s.x-skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][0]+camerax,s.y+skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][1]-cheight+cameray,skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][2],skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][3],things    
     def ray_cast_detetion(s):
+        obrnuto=1
+        if not s.dirr:
+            obrnuto=-1
+        
+        
+        headx,heady,headw,headh,things=s.getheadpos()# WITH camerax/y
         if s.dirr:
-            linex=s.x
-        angle=150
-        endangle=215 #last angle is 210
+            angle=150
+            endangle=213 #last angle is 210
+        else:
+            angle=327
+            endangle=390
+        halflife=HEIGHT//(HEIGHT//400)
         while True:
-            
-            pygame.draw.line(window,(255,0,0),)
+            color=(203,203,203)
+            if angle==endangle:
+                break
+            dx,dy=angle_to_vector_unit_circle(angle)
+            for i in range(len(lplatforms)):
+                if rectlinecolison([headx+(headw//2*obrnuto),heady+(headh//2*obrnuto),headx+dx*halflife+(headw//2*obrnuto),heady+dy*halflife+(headh//2*obrnuto)],pygame.rect.Rect(lplatforms[i].x+camerax,lplatforms[i].y+cameray,lplatforms[i].width,lplatforms[i].height)):
+                    color=(255,0,0)
+            if color==(203,203,203):
+                pass
+                #Check player collision
+            if debugmodeforvision:
+                pygame.draw.rect(window,(0,255,0),pygame.rect.Rect(headx,heady,headw,headh))
+                pygame.draw.line(window,(color),(headx+(headw//2*obrnuto),heady+(headh//2*obrnuto)),(headx+dx*halflife+(headw//2*obrnuto),heady+dy*halflife+(headh//2*obrnuto)))
+            angle+=3
     def behaviour(s):
         pass
     def get_animation(s):
-        pass
+        
     
     
 
@@ -139,8 +163,8 @@ class Skeleton_spearman:
         #Index
         #Index
         #Index
-        amount=spritelistskeleton[0]
-        timeamount=spritelistskeleton[1]
+        amount=spritelistskeleton[spritename][0]
+        timeamount=spritelistskeleton[spritename][1]
         #BLITING
         #BLITING
         #BLITING
@@ -148,10 +172,17 @@ class Skeleton_spearman:
         s.time+=1
         s.time%=timeamount
         frame=int(s.time//(timeamount/amount))
-        img=textures[f"Skeleton{dire}{spritename}{frame}"]
+        img=textures[f"Skeletonspearman{dire}{spritename}{frame}"]
         return [spritename,img,timeamount,amount,frame]
     def draw(s):
-        pass
+        things=s.get_img()
+        if s.dirr:
+            dire="r"
+            window.blit(textures[f"Skeletonspearman{dire}{things[0]}{things[-1]}"],(s.x+camerax,s.y+cameray-textures[f"Skeletonspearman{dire}{things[0]}{things[-1]}"].get_height()))
+
+        else:
+            dire="l"
+            window.blit(textures[f"Skeletonspearman{dire}{things[0]}{things[-1]}"],(s.x+camerax-textures[f"Skeletonspearman{dire}{things[0]}{things[-1]}"].get_width(),s.y+cameray-textures[f"Skeletonspearman{dire}{things[0]}{things[-1]}"].get_height()))
 
 class Portrait:
     def __init__(s,x,y,portrait,offw,offh):
@@ -190,7 +221,7 @@ class Portrait:
 offsetportraitplayerw=(WIDTH/knighheadscale[0]-WIDTH/knighheadscale[2])/2
 offsetportraitplayerh=(HEIGHT/knighheadscale[1]-HEIGHT/knighheadscale[3])/2
 playerportrait=Portrait(0,0,"Knighttopright",offsetportraitplayerw,offsetportraitplayerh)
-
+lskeletonsspearman=[Skeleton_spearman(WIDTH//2+100+WIDTH//4-50,HEIGHT-200,10,0,True)]
 camerax,cameray=0,0
 
 class Knight:
@@ -480,7 +511,7 @@ class Knight:
         #pygame.draw.circle(window,(46, 230, 137),(centerofmassx,s.y-int(HEIGHT//14.22666666666667)*2.5),int(WIDTH//68.28),int(WIDTH//(68.28*2)))
         return img
         
-player=Knight(WIDTH//2-50,HEIGHT//2+100,10,10,360,360,0,True)
+player=Knight(WIDTH//2-50,HEIGHT//2+100,3.5,10,360,360,0,True)
 camerax=WIDTH//2-300
 cameray=(HEIGHT//2-HEIGHT)+200
 lastframekeys=[]
@@ -498,6 +529,12 @@ while True:
     
     if keys[pygame.K_ESCAPE]:
         break
+    if keys[pygame.K_v]:
+        if not holdingv:
+            debugmodeforvision=not debugmodeforvision
+            holdingv=True
+    else:
+        holdingv=False        
     playerstandingonplatform=False
     things=player.get_img(keys,mouseclicked)
     platformy=None
@@ -534,6 +571,9 @@ while True:
                 klizanje=[False]
             if klizanje[-1]=="l" and verdict[-1]=="r":
                 klizanje=[False]
+    for i in range(len(lskeletonsspearman)):
+        lskeletonsspearman[i].draw()
+        lskeletonsspearman[i].ray_cast_detetion()
     camera=player.move(keys,mouseclicked,platformy,klizanje,camerax,cameray)
     camerax,cameray=camera[0],camera[1]
     drawn_img=player.draw(keys,mouseclicked)
