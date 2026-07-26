@@ -20,10 +20,13 @@ def get_knight_rect(spritename:str,xleft:int,time:int,dirrectionr):
     return newleft,newwidth
 
 def rectlinecolison(linecords:list,rectlike:pygame.Rect):
-    if rectlike.clipline(linecords[0],linecords[1],linecords[2],linecords[3]):
-        return True
+    a=rectlike.clipline(linecords[0],linecords[1],linecords[2],linecords[3])
+    if a:
+        entry=a[0]
+        x,y=entry[0],entry[1]
+        return True,x,y
     else:
-        return False
+        return False,None,None
     
 ddyforplayerchange=HEIGHT/53350
 ddycapforplayer=HEIGHT/5335
@@ -99,7 +102,8 @@ class Skeleton_spearman:
             return s.x+skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][0]+camerax,s.y+skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][1]-cheight+cameray,skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][2],skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][3],things
         else:
             return s.x-skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][0]+camerax,s.y+skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][1]-cheight+cameray,skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][2],skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][3],things    
-    def ray_cast_detetion(s):
+    def ray_cast_detetion(s,width,height,obr):
+        
         headx,heady,headw,headh,things=s.getheadpos()# WITH camerax/y
         if not s.dirr:
             angle=150
@@ -111,16 +115,23 @@ class Skeleton_spearman:
         if debugmodeforvision:
             pygame.draw.rect(window,(0,255,0),pygame.rect.Rect(headx-headw//2,heady-headh//2,headw,headh))
         while True:
-            color=(203,203,203)
+            distance=float("inf")
+            color=(255, 255, 0)
             if angle==endangle:
                 break
             dx,dy=angle_to_vector_unit_circle(angle)
             for i in range(len(lplatforms)):
-                if rectlinecolison([headx,heady,headx+dx*halflife,heady+dy*halflife],pygame.rect.Rect(lplatforms[i].x+camerax,lplatforms[i].y+cameray,lplatforms[i].width,lplatforms[i].height)):
+                a,b,c=rectlinecolison([headx,heady,headx+dx*halflife,heady+dy*halflife],pygame.rect.Rect(lplatforms[i].x+camerax,lplatforms[i].y+cameray,lplatforms[i].width,lplatforms[i].height))
+                if a:
+                    distance=math.sqrt(2**(abs(headx-b))+(abs(heady-c))**2)
                     color=(255,0,0)
-            if color==(203,203,203):
-                pass
-                #Check player collision
+            
+            a2,b2,c2=rectlinecolison([headx,heady,headx+dx*halflife,heady+dy*halflife],pygame.rect.Rect(player.x+width*obrnuto,player.y-height,width,height))
+            if a2:
+                distance2=math.sqrt(2**(abs(headx-b2))+(abs(heady-c2))**2)
+                if distance2<=distance:
+                    color=(0,255,0)
+            #Check player collision
             if debugmodeforvision:
                 pygame.draw.line(window,(color),(headx,heady),(headx+dx*halflife,heady+dy*halflife))
             angle+=3
@@ -465,6 +476,8 @@ while True:
     klizanje=[None]
     #OF FRAME
     difference=None
+    if keys[pygame.K_b]:
+        breakpoint()
     plx,plwidth=get_knight_rect(things[0],player.x,things[-1],player.directionr)
     if player.directionr:
         centerofmass=plx+plwidth//2
@@ -492,13 +505,23 @@ while True:
                 klizanje=[False]
             if klizanje[-1]=="l" and verdict[-1]=="r":
                 klizanje=[False]
+    if player.directionr:
+        diree="r"
+        obrnuto=0
+        obrnuto2=1
+    else:
+        diree="l"
+        obrnuto=-1
+        obrnuto2=-1
     for i in range(len(lskeletonsspearman)):
         lskeletonsspearman[i].draw()
-        lskeletonsspearman[i].ray_cast_detetion()
+        lskeletonsspearman[i].ray_cast_detetion(plwidth,things[1].get_height(),obrnuto)
     camera=player.move(keys,mouseclicked,platformy,klizanje,camerax,cameray)
     camerax,cameray=camera[0],camera[1]
     drawn_img=player.draw(keys,mouseclicked)
     playerportrait.draw()
+    if debugmodeforvision:
+        pygame.draw.circle(window,(0,255,0),(plx+plwidth//2*obrnuto2,player.y-things[1].get_height()//2),5)
     playerportrait.draw_hearts(player.maxhealth,player.health)
     playerportrait.draw_stamina(player.maxstamina,player.stamina)
     pygame.display.update()

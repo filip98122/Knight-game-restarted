@@ -29,8 +29,6 @@ def load():
     for i in range(len(namesofspritesKnight)):
         for j in range(namesofspritesKnight[i][1]):
             scale=HEIGHT/900
-            if namesofspritesKnight[i][0]=="jump":
-                scale*=1.14
             a=pygame.image.load(f"textures/Knight/{namesofspritesKnight[i][0]}{j}.png")
             textures[f"Knightr{namesofspritesKnight[i][0]}{j}"]=pygame.transform.scale(a,(a.get_width()*scale,a.get_height()*scale))
             textures[f"Knightl{namesofspritesKnight[i][0]}{j}"]=pygame.transform.flip(textures[f"Knightr{namesofspritesKnight[i][0]}{j}"],True,False)
