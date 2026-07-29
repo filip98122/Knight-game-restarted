@@ -22,6 +22,17 @@ staminacirclediameter=HEIGHT//21.34
 lhearts=["f","3","h"]
 spritelistskeleton={"idle":[7,250]}
 skeletonscale=HEIGHT/(HEIGHT/2)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+PURPLE = (128, 0, 128)
+ORANGE= (255, 165, 0)
+GREY = (128, 128, 128)
+TURQUOISE = (64, 224, 208)
+import queue
 for i in range(4):
     knighheadscale[i]*=2
 def load():

@@ -1,21 +1,31 @@
 from loader import *
-ltexturesoffset={"attack":[[0,0],[42,0],[54,0],[0,0],[0,82]],"jump":[[0,0],[0,18],[0,0],[20,49],[0,46],[0,44]],"powerattack":[[14,0],[24,0],[14,55],[13,45]]}
+ltexturesoffset={"attack":[[0,0,0,0],[26,0,0,0],[50,0,0,0],[0,0,0,0],[0,82,0,0]],
+                 "jump":[[0,0,0,0],[0,18,0,0],[0,0,0,0],[20,49,0,0],[0,46,0,0],[0,44,0,0]],
+                 "powerattack":[[14,0],0,0,[24,0,0,0],[14,55,0,0],[13,45,0,0]],
+                 "runattack":[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]}
 
 def get_knight_rect(spritename:str,xleft:int,time:int,dirrectionr):
+    textureoffset=0
+    if spritename=="attack":
+        if time==1:
+            textureoffset=26*scale
+        elif time==2:
+            textureoffset=50* scale
+    textureoffset=int(textureoffset)
     if spritename in ltexturesoffset:
         if dirrectionr:
-            newleft=xleft+ltexturesoffset[spritename][time][0]*scale
+            newleft=xleft+ltexturesoffset[spritename][time][0]*scale-textureoffset
             newwidth=textures[f"Knightr{spritename}{time}"].get_width()-ltexturesoffset[spritename][time][1]*scale-ltexturesoffset[spritename][time][0]*scale
         else:
-            newleft=xleft-ltexturesoffset[spritename][time][0]*scale
+            newleft=xleft-ltexturesoffset[spritename][time][0]*scale+textureoffset
             newwidth=textures[f"Knightr{spritename}{time}"].get_width()-ltexturesoffset[spritename][time][1]*scale-ltexturesoffset[spritename][time][0]*scale
     else:
         if dirrectionr:
-            newleft=xleft
+            newleft=xleft-textureoffset
             newwidth=textures[f"Knightr{spritename}{time}"].get_width()
         else:
             newwidth=textures[f"Knightr{spritename}{time}"].get_width()
-            newleft=xleft
+            newleft=xleft+textureoffset
             
     return newleft,newwidth
 
@@ -64,7 +74,10 @@ class Platforms:
                     return [True,s.y,s.x,s.width ,zadniji]
             return [False,-1,-1,-1,None]
         
-lplatforms=[Platforms(1,0,HEIGHT-99,WIDTH//2-100,99),Platforms(1,WIDTH//2+100,HEIGHT-199,WIDTH//2-100,99),Platforms(1,0,HEIGHT-379,WIDTH//2-100,99),Platforms(1,WIDTH//2+100,HEIGHT-479,WIDTH//2-100,99)]
+lplatforms=[Platforms(1,0,HEIGHT-99,WIDTH//2-100,99),
+            Platforms(1,WIDTH//2+100,HEIGHT-199,WIDTH//2-100,99),
+            Platforms(1,0,HEIGHT-379,WIDTH//2-100,99),
+            Platforms(1,WIDTH//2+100,HEIGHT-479,WIDTH//2-100,99)]
 
 lskeletonspearmanlistofsprites={"attack":[(46, 0, 15, 17),(46, 0, 15, 17),(30, 0, 15, 17),(30, 0, 15, 17)],
                                 "defend":[(20, 10, 15, 17), (10, 12, 15, 17)],
@@ -83,28 +96,22 @@ def angle_to_vector_unit_circle(angle):
     dy=round(math.sin(rad),10)
     return dx,dy
 
-class Skeleton_spearman:
-    def __init__(s,x,y,health,time,dirr,atributes=None):
-        s.x=x
-        s.y=y
-        s.health=health
-        s.time=time
-        s.dirr=dirr
-        s.state="stationary"
-    def getheadpos(s):
+class Enemy:
+    def getheadpos(s,scale,dict):
         things=s.get_img()
+        s.time-=1
         if s.dirr:
             dire="r"
         else:
             dire="l"
-        cheight=textures[f"Skeletonspearman{dire}{things[0]}{things[-1]}"].get_height()
+        cheight=textures[f"{type(s).__name__}{dire}{things[0]}{things[-1]}"].get_height()
         if s.dirr:
-            return s.x+skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][0]+camerax,s.y+skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][1]-cheight+cameray,skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][2],skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][3],things
+            return s.x+scale*dict[things[0]][things[-1]][0]+camerax,s.y+scale*dict[things[0]][things[-1]][1]-cheight+cameray,scale*dict[things[0]][things[-1]][2],scale*dict[things[0]][things[-1]][3],things
         else:
-            return s.x-skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][0]+camerax,s.y+skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][1]-cheight+cameray,skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][2],skeletonscale*lskeletonspearmanlistofsprites[things[0]][things[-1]][3],things    
-    def ray_cast_detetion(s,width,height,obr):
-        
-        headx,heady,headw,headh,things=s.getheadpos()# WITH camerax/y
+            return s.x-scale*dict[things[0]][things[-1]][0]+camerax,s.y+scale*dict[things[0]][things[-1]][1]-cheight+cameray,scale*dict[things[0]][things[-1]][2],scale*dict[things[0]][things[-1]][3],things
+    def ray_cast_detetion(s,width,height,obr,scale,dict):
+        headx,heady,headw,headh,things=s.getheadpos(scale,dict)# WITH camerax/y
+        detected=False
         if not s.dirr:
             angle=150
             endangle=213 #last angle is 210
@@ -131,19 +138,12 @@ class Skeleton_spearman:
                 distance2=math.sqrt(2**(abs(headx-b2))+(abs(heady-c2))**2)
                 if distance2<=distance:
                     color=(0,255,0)
+                    detected=True
             #Check player collision
             if debugmodeforvision:
                 pygame.draw.line(window,(color),(headx,heady),(headx+dx*halflife,heady+dy*halflife))
             angle+=3
-    
-    def behaviour(s):
-        pass
-    
-    def get_animation(s):
-        if s.state=="stationary":
-            spriitename="idle"
-        return spriitename
-    
+        return detected
     def get_img(s):   #Need to reset time after calling
         #Animation
         spritename=s.get_animation()
@@ -159,17 +159,105 @@ class Skeleton_spearman:
         s.time+=1
         s.time%=timeamount
         frame=int(s.time//(timeamount/amount))
-        img=textures[f"Skeletonspearman{dire}{spritename}{frame}"]
+        img=textures[f"{type(s).__name__}{dire}{things[0]}{things[-1]}"]
         return [spritename,img,timeamount,amount,frame]
     def draw(s):
         things=s.get_img()
         if s.dirr:
             dire="r"
-            window.blit(textures[f"Skeletonspearman{dire}{things[0]}{things[-1]}"],(s.x+camerax,s.y+cameray-textures[f"Skeletonspearman{dire}{things[0]}{things[-1]}"].get_height()))
+            window.blit(things[1],(s.x+camerax,s.y+cameray-textures[f"Skeletonspearman{dire}{things[0]}{things[-1]}"].get_height()))
 
         else:
             dire="l"
-            window.blit(textures[f"Skeletonspearman{dire}{things[0]}{things[-1]}"],(s.x+camerax-textures[f"Skeletonspearman{dire}{things[0]}{things[-1]}"].get_width(),s.y+cameray-textures[f"Skeletonspearman{dire}{things[0]}{things[-1]}"].get_height()))
+            window.blit(things[1],(s.x+camerax-textures[f"Skeletonspearman{dire}{things[0]}{things[-1]}"].get_width(),s.y+cameray-textures[f"Skeletonspearman{dire}{things[0]}{things[-1]}"].get_height()))
+class Node:
+    def __init__(s,pos,neighbors,color):
+        s.x,s.y=pos
+        s.color=color
+        s.neighbors=neighbors
+lnodes=[]
+def h(p1,p2):
+    x1,y1=p1
+    x2,y2=p2
+    return abs(x1-x2)+abs(y1-y2)
+
+
+def algorithim(l,start,end):
+    count=0
+    startindex=l[start[0]+start[1]*50]
+    endindex=l[end[0]+end[1]*50]
+    openset=queue.PriorityQueue()
+    openset.put((0,count,startindex))
+    camefrom={}
+    g_score={Node:float("inf") for Node in l}
+    f_score={Node:float("inf") for Node in l}
+    f_score[startindex]=h(start,end)
+    g_score[startindex]=0
+    opensethashforqueue={startindex}
+    while not openset.empty():
+        events=pygame.event.get()
+        for event in events:
+            if event.type==pygame.QUIT:
+                pygame.quit()
+        current=openset.get()[2]
+        opensethashforqueue.remove(current)
+        if current==endindex:
+            count=0
+            while True:
+                if camefrom[current]==startindex:
+                    break
+                camefrom[current].color=TURQUOISE
+                count+=1
+                current=camefrom[current]
+            return True #DONE
+        for neighbor in current.neighbors:
+            temp_g_score=g_score[current]+1     #PLUS ONE CAN BE WEIGHTED
+            if temp_g_score<g_score[neighbor]:
+                camefrom[neighbor]=current
+                g_score[neighbor]=temp_g_score
+                f_score[neighbor]=temp_g_score+h((neighbor.col,neighbor.row),end)
+                if neighbor not in opensethashforqueue:
+                    count+=1
+                    openset.put((f_score[neighbor],count,neighbor))
+                    opensethashforqueue.add(neighbor)
+                    if l[neighbor.col*50+neighbor.row].color!=PURPLE and l[neighbor.col*50+neighbor.row].color!=ORANGE:
+                        l[neighbor.col*50+neighbor.row].color=GREEN
+        for i in range(len(l)):
+            l[i].draw()
+        if current!=start:
+            if l[current.col*50+current.row].color!=PURPLE and l[current.col*50+current.row].color!=ORANGE:
+                l[current.col*50+current.row].color=RED
+
+    return False
+
+class Skeletonspearman(Enemy):
+    def __init__(s,x,y,health,time,dirr,state,atributes=None):
+        s.x=x
+        s.y=y
+        s.health=health
+        s.time=time
+        s.dirr=dirr
+        s.state=state
+        s.sincedetection=0
+    def behaviour(s,detected):
+        if s.sincedetection<300:
+            if detected:
+                s.sincedetection=0
+            else:
+                s.sincedetection+=1
+        else:
+            if detected:
+                s.state="hunting"
+            elif s.state=="hunting":#BILO
+                s.state="returning"
+    def move(s):
+        pass
+    def get_animation(s):
+        if s.state=="stationary":
+            spriitename="idle"
+        return spriitename
+
+
 
 class Portrait:
     def __init__(s,x,y,portrait,offw,offh):
@@ -208,7 +296,7 @@ class Portrait:
 offsetportraitplayerw=(WIDTH/knighheadscale[0]-WIDTH/knighheadscale[2])/2
 offsetportraitplayerh=(HEIGHT/knighheadscale[1]-HEIGHT/knighheadscale[3])/2
 playerportrait=Portrait(0,0,"Knighttopright",offsetportraitplayerw,offsetportraitplayerh)
-lskeletonsspearman=[Skeleton_spearman(WIDTH//2+100+WIDTH//4-50,HEIGHT-200,10,0,True)]
+lskeletonsspearman=[Skeletonspearman(WIDTH//2+100+WIDTH//4-50,HEIGHT-200,10,0,True)]
 camerax,cameray=0,0
 
 class Knight:
@@ -234,17 +322,17 @@ class Knight:
         s.maxhealth=maxhealth
         s.jumped=False
     def move(s,keys,mouse,platy,sliding,camerax,cameray):
-        if s.lockin==None:
+        if s.lockin==None: 
             if not s.lasttimefell:
                 speedboost=1
                 sprite=s.get_animation(keys,mouse)
-                if keys[pygame.K_LSHIFT] and s.stamina>0 and sprite!="rest":
-                        speedboost*=2
-                        s.stamina-=1
-                        s.since_shift=200
-                        if not s.shift:
-                            s.shift=True
-                            s.time=0
+                if keys[pygame.K_LSHIFT] and s.stamina>0 and sprite!="rest": #For boosting speed
+                    speedboost*=2
+                    s.stamina-=1
+                    s.since_shift=200
+                    if not s.shift:
+                        s.shift=True
+                        s.time=0
                 else:
                     if s.shift:
                         s.shift=False
@@ -252,7 +340,7 @@ class Knight:
                     if s.since_shift==0:
                         s.stamina+=2
                         s.stamina=min(s.stamina,s.maxstamina)
-                if keys[pygame.K_d]:
+                if keys[pygame.K_d]:#moving right
                     camerax-=s.speed*speedboost
                     if not s.directionr:
                         s.directionr=not s.directionr
@@ -261,8 +349,7 @@ class Knight:
                         img=g[1]
                         s.x-=img.get_width()
                         s.time-=1
-                    
-                if keys[pygame.K_a]:
+                if keys[pygame.K_a]:#moving left
                     camerax+=s.speed*speedboost
                     if s.directionr:
                         s.directionr=not s.directionr
@@ -271,12 +358,14 @@ class Knight:
                         img=g[1]
                         s.x+=img.get_width()
                         s.time-=1
-            else:
+            else: #If not slided, move on x axis
                 if s.slided==False:
                     if s.directionr:
                         camerax-=s.speed*s.jumpspeedboost                
                     else:
                         camerax+=s.speed*s.jumpspeedboost
+        else:
+            s.since_shift=200
         #LOCKINS
         if s.lockin=="runattack":
             if s.directionr:
@@ -296,7 +385,7 @@ class Knight:
             else:
                 camerax+=s.speed*s.jumpspeedboost
                 #ANIMATION
-        if sliding[-1]!=False and s.slided==False and s.lockin==None and s.lasttimefell==False:
+        if sliding[-1]!=False and s.slided==False and s.lockin==None and s.lasttimefell==False: #decreasing slidof
             s.slidof-=1
             if s.slidof==0:
                 s.slided=True
@@ -313,7 +402,7 @@ class Knight:
                         camerax+=s.x-(sliding[0]-1-widthframe)-camerax
                     else:
                         camerax+=s.x-(sliding[0]-1)-camerax
-        else:
+        else:#if not on the edge reset slidof
             s.slidof=150
         #Y
         if platy==None:
@@ -342,6 +431,7 @@ class Knight:
                 s.jumpspeedboost=1
             
                 cameray-=(platy+cameray)-0.5-s.y
+
         cameray-=s.dy
         if not keys[pygame.K_LSHIFT]:
             s.since_shift=max(s.since_shift-1,0)
@@ -420,12 +510,14 @@ class Knight:
         spritename=notordered[0]
         
         textureoffset=0
+        
         if spritename=="attack":
             if frame==1:
                 textureoffset=26*scale
             elif frame==2:
                 textureoffset=50* scale
         textureoffset=int(textureoffset)
+        
         if s.directionr:
             #26
             #50
@@ -514,14 +606,15 @@ while True:
         obrnuto=-1
         obrnuto2=-1
     for i in range(len(lskeletonsspearman)):
+        detected=lskeletonsspearman[i].ray_cast_detetion(plwidth,things[1].get_height(),obrnuto,skeletonscale,lskeletonspearmanlistofsprites)
         lskeletonsspearman[i].draw()
-        lskeletonsspearman[i].ray_cast_detetion(plwidth,things[1].get_height(),obrnuto)
     camera=player.move(keys,mouseclicked,platformy,klizanje,camerax,cameray)
     camerax,cameray=camera[0],camera[1]
     drawn_img=player.draw(keys,mouseclicked)
     playerportrait.draw()
     if debugmodeforvision:
         pygame.draw.circle(window,(0,255,0),(plx+plwidth//2*obrnuto2,player.y-things[1].get_height()//2),5)
+        #pygame.draw.rect(window,(0,255,0),pygame.Rect(plx+obrnuto*plwidth,player.y-things[1].get_height(),plwidth,things[1].get_height()))
     playerportrait.draw_hearts(player.maxhealth,player.health)
     playerportrait.draw_stamina(player.maxstamina,player.stamina)
     pygame.display.update()
