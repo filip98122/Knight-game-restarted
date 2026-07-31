@@ -159,7 +159,7 @@ class Enemy:
         s.time+=1
         s.time%=timeamount
         frame=int(s.time//(timeamount/amount))
-        img=textures[f"{type(s).__name__}{dire}{things[0]}{things[-1]}"]
+        img=textures[f"{type(s).__name__}{dire}{spritename}{frame}"]
         return [spritename,img,timeamount,amount,frame]
     def draw(s):
         things=s.get_img()
@@ -170,11 +170,33 @@ class Enemy:
         else:
             dire="l"
             window.blit(things[1],(s.x+camerax-textures[f"Skeletonspearman{dire}{things[0]}{things[-1]}"].get_width(),s.y+cameray-textures[f"Skeletonspearman{dire}{things[0]}{things[-1]}"].get_height()))
+    
 class Node:
-    def __init__(s,pos,neighbors,color):
+    def __init__(s,pos,neighbors,round):
         s.x,s.y=pos
-        s.color=color
-        s.neighbors=neighbors
+        s.permanantneighbors=neighbors
+        s.neighbors=[]
+        s.onplatform,ifro=s.getplat()
+        if round:
+            s.y=s.yround(ifro)
+    def getplat(s,lplat):
+        smallestdistance=float("inf")
+        cuvani=None
+        for i in range(len(lplatforms)):
+            li=lplatforms[i].ifplayerontop(s.x+camerax,s.y+cameray,0,0)#ontop,x,y,w,h,on edge (ignore)
+            if li[0]:
+                if smallestdistance>abs(s.y+cameray-li[2]):
+                    smallestdistance=s.y-cameray-li[2]
+                    cuvani=lplatforms[i]
+        return cuvani,li[2]
+    def yround(s,ifro):
+        return ifro-1
+    def getplatform_neighbors(s,lnodes):
+        for i in range(lnodes):
+            if lnodes[i].onplatform==s.onplatform:
+                s.neighbors.append(lnodes[i])
+    def drawfordebug(s):
+        pygame.draw.circle(window,GREEN,(s.x+camerax,s.y+cameray),10)
 lnodes=[]
 def h(p1,p2):
     x1,y1=p1
@@ -184,13 +206,14 @@ def h(p1,p2):
 
 def algorithim(l,start,end):
     count=0
-    startindex=l[start[0]+start[1]*50]
-    endindex=l[end[0]+end[1]*50]
+    startindex=start  #BRISE
+    endindex=end #BRISE
     openset=queue.PriorityQueue()
     openset.put((0,count,startindex))
     camefrom={}
-    g_score={Node:float("inf") for Node in l}
-    f_score={Node:float("inf") for Node in l}
+    prosireno=l+[start,end]
+    g_score={Node:float("inf") for Node in prosireno}
+    f_score={Node:float("inf") for Node in prosireno}
     f_score[startindex]=h(start,end)
     g_score[startindex]=0
     opensethashforqueue={startindex}
@@ -220,13 +243,6 @@ def algorithim(l,start,end):
                     count+=1
                     openset.put((f_score[neighbor],count,neighbor))
                     opensethashforqueue.add(neighbor)
-                    if l[neighbor.col*50+neighbor.row].color!=PURPLE and l[neighbor.col*50+neighbor.row].color!=ORANGE:
-                        l[neighbor.col*50+neighbor.row].color=GREEN
-        for i in range(len(l)):
-            l[i].draw()
-        if current!=start:
-            if l[current.col*50+current.row].color!=PURPLE and l[current.col*50+current.row].color!=ORANGE:
-                l[current.col*50+current.row].color=RED
 
     return False
 
@@ -296,9 +312,9 @@ class Portrait:
 offsetportraitplayerw=(WIDTH/knighheadscale[0]-WIDTH/knighheadscale[2])/2
 offsetportraitplayerh=(HEIGHT/knighheadscale[1]-HEIGHT/knighheadscale[3])/2
 playerportrait=Portrait(0,0,"Knighttopright",offsetportraitplayerw,offsetportraitplayerh)
-lskeletonsspearman=[Skeletonspearman(WIDTH//2+100+WIDTH//4-50,HEIGHT-200,10,0,True)]
+lskeletonsspearman=[Skeletonspearman(WIDTH//2+100+WIDTH//4-50,HEIGHT-200,10,0,True,"stationary")]
 camerax,cameray=0,0
-
+lnodes=[Node(())]
 class Knight:
     def __init__(s,x,y,health,maxhealth,stamina,maxstamina,time,dirr,atributes=None):
         s.x=x
@@ -447,7 +463,7 @@ class Knight:
                 spritename="run"
             if (keys[pygame.K_d] and keys[pygame.K_a]):
                 spritename="rest"
-            if mouse[0]==True and s.lasttimefell==False:
+            if mouse[0]==True and s.lasttimefell==False and holdingn==False:
                 s.time=0
                 spritename="attack"
                 s.lockin="attack"
@@ -542,6 +558,7 @@ camerax=WIDTH//2-300
 cameray=(HEIGHT//2-HEIGHT)+200
 lastframekeys=[]
 
+holdingn=False
 
 while True:
     window.fill("Blue")
@@ -569,7 +586,8 @@ while True:
     #OF FRAME
     difference=None
     if keys[pygame.K_b]:
-        breakpoint()
+        pass
+        #breakpoint()
     plx,plwidth=get_knight_rect(things[0],player.x,things[-1],player.directionr)
     if player.directionr:
         centerofmass=plx+plwidth//2
@@ -605,6 +623,18 @@ while True:
         diree="l"
         obrnuto=-1
         obrnuto2=-1
+    if keys[pygame.K_n]:
+        holdingn=True
+    if holdingn:
+        if mouseclicked[0]:
+            lnodes.append(Node((mousepos[0]-camerax,mousepos[1]-cameray),[],None))
+            print((mousepos[0]-camerax,mousepos[1]-cameray))
+            holdingn=False
+    if keys[pygame.K_n]:
+        holdingn=True
+    if debugmodeforvision:
+        for i in range(len(lnodes)):
+            lnodes[i].drawfordebug()
     for i in range(len(lskeletonsspearman)):
         detected=lskeletonsspearman[i].ray_cast_detetion(plwidth,things[1].get_height(),obrnuto,skeletonscale,lskeletonspearmanlistofsprites)
         lskeletonsspearman[i].draw()
